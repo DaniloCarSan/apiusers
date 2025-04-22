@@ -14,7 +14,7 @@ readonly class Input
 
     public function updateEntity(User $user): User
     {
-        $user->setName($this->name);
+        $user->name  = $this->name;
         return $user;
     }
 }
