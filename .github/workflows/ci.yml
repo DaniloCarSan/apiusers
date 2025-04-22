@@ -1,0 +1,67 @@
+name: APIUsers
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+    branches:
+      - main
+      - dev
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0.38
+        env:
+          MYSQL_DATABASE: apiusers
+          MYSQL_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 33306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Copy .env
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+      - name: Change database user4
+        run: sed -i 's/DB_USERNAME=admin/DB_USERNAME=root/g' .env
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress
+
+      - name: Generate key
+        run: php artisan key:generate
+
+      - name: Directory Permissions
+        run: chmod -R 777 storage bootstrap/cache
+
+      - name: Set up MySQL
+        env:
+          DB_DATABASE: apiusers
+          DB_USERNAME: root
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
+          DB_PASSWORD: root
+        run: |
+          sudo /etc/init.d/mysql start
+          mysql  -u${{ env.DB_USERNAME }} -p${{ env.DB_PASSWORD }} -e 'CREATE DATABASE `${{ env.DB_DATABASE }}`;'
+
+      - name: Migrate and populate database
+        run: |
+          php artisan migrate:install
+          php artisan migrate --seed
+
+      - name: Execute tests (Unit and Feature tests) via PHPUnit
+        env:
+          DB_CONNECTION: mysql
+          DB_DATABASE: apiusers
+          DB_USERNAME: root
+          DB_PASSWORD: root
+          CACHE_DRIVER: array
+          SESSION_DRIVER: array
+          QUEUE_DRIVER: sync
+        run: vendor/bin/phpunit

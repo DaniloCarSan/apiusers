@@ -1,0 +1,230 @@
+openapi: 3.0.2
+info:
+  title: API User
+  version: v1.0.0
+  contact:
+    email: danilocarsan@gmail.com
+    name: Danilo Dos Santos Carreiro
+    url: https://github.com/DaniloCarSan
+  description: Uma API para gerenciamento de usuários
+servers:
+  - url: http://localhost/api
+    description: Acesso a url base da API
+components:
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+  schemas:
+    Auth:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+    AccessToken:
+      type: object
+      properties:
+        token:
+          type: string
+        expires_at:
+          type: string
+        abilities:
+          type: array
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+    RequestBodySignIn:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: danilocarsan@gmail.com
+        password:
+          type: string
+          minLength: 8
+          example: password
+        deviceName:
+          type: string
+          description: Nome do dispositivo tentando fazer o login
+          example: Iphone 14 Pro Max
+    ResponseBodySignIn:
+      type: object
+      properties:
+        Auth:
+          $ref: '#/components/schemas/Auth'
+        accessToken:
+          $ref: '#/components/schemas/AccessToken'
+    RequestBodyUserCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Lorem Ipsum
+        email:
+          type: string
+          format: email
+          example: lorem.ipsum@gmail.com
+        password: 
+          type: string
+          minLength: 8
+          example: password
+paths:
+  /auth/sign/in:
+    post:
+      description: Realizar login na aplicação
+      tags:
+        - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestBodySignIn'
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseBodySignIn'
+        '401':
+          description: Email ou senha incorretos
+  /users:
+    post:
+      description: Cria um usuário
+      tags:
+        - users
+      security:
+        - Bearer: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestBodyUserCreate'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '500':
+          description: ''
+    get:
+      description: Lista e filtra os usuários
+      tags:
+        - users
+      security:
+        - Bearer: []
+      parameters:
+        - name: search
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: page
+          required: true
+          in: query
+          schema:
+            type: integer
+          example: 1
+        - name: perPage
+          required: false
+          in: query
+          schema:
+            type: integer
+          example: 10
+      responses:
+        '200':
+          description: ''
+        '500':
+          description: ''
+  /users/{id}:
+    get:
+      description: Obtem um usuário
+      tags:
+        - users
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: ''
+        '500':
+          description: ''
+    put:
+      description: Atualiza um usuário
+      tags:
+        - users
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: ''
+        '500':
+          description: ''
+    delete:
+      description: Exclui um usuário
+      tags:
+        - users
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: ''
+        '500':
+          description: ''
